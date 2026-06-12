@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ayush Sharma — Building things, one commit at a time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e0f;
+    --bg-raised: #11161a;
+    --border: #232b30;
+    --text: #e8e6e1;
+    --text-dim: #8a9296;
+    --accent: #ff6b35;
+    --accent-dim: #c9501f;
+    --teal: #7fd4c1;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* subtle grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  :focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 3px;
+  }
+
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(10, 14, 15, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+  .nav-logo {
+    color: var(--text);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 24px; }
+  .nav-links a { color: var(--text-dim); transition: color 0.2s; }
+  .nav-links a:hover { color: var(--teal); text-decoration: none; }
+
+  /* ===== HERO / TERMINAL ===== */
+  .hero {
+    padding: 80px 0 60px;
+  }
+
+  .terminal {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px -24px rgba(0,0,0,0.6);
+  }
+
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #161c20;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+  .terminal-title {
+    margin-left: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  .terminal-body {
+    padding: 28px 28px 32px;
+    font-family: var(--font-mono);
+    font-size: 0.92rem;
+  }
+
+  .prompt-line { color: var(--text-dim); margin-bottom: 4px; }
+  .prompt-line .prompt-sym { color: var(--teal); }
+  .prompt-line .cmd { color: var(--text); }
+
+  .typed-output {
+    margin: 18px 0 22px;
+  }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 6vw, 3.4rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 14px;
+  }
+  .hero h1 .accent { color: var(--accent); }
+
+  .hero p.tagline {
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    color: var(--text-dim);
+    max-width: 540px;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 9px;
+    height: 1.1em;
+    background: var(--teal);
+    margin-left: 4px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .hero-cta {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 11px 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0e0f;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+    text-decoration: none;
+  }
+  .btn-ghost {
+    color: var(--text);
+    background: transparent;
+  }
+  .btn-ghost:hover {
+    border-color: var(--teal);
+    color: var(--teal);
+    text-decoration: none;
+  }
+
+  /* ===== SECTION SHARED ===== */
+  section { padding: 64px 0; border-top: 1px solid var(--border); }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+  .section-path {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 10px;
+  }
+  .section-head h2 {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 600;
+  }
+
+  /* ===== ABOUT ===== */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 36px;
+    align-items: start;
+  }
+  .about-photo {
+    width: 100%;
+    max-width: 220px;
+    aspect-ratio: 3/4;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .about-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .about-photo-caption {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 10px;
+    text-align: center;
+  }
+  .about-text p { margin-bottom: 14px; color: var(--text-dim); }
+  .about-text strong { color: var(--text); font-weight: 600; }
+  .about-text .highlight { color: var(--teal); }
+
+  @media (max-width: 640px) {
+    .about-grid { grid-template-columns: 1fr; }
+    .about-photo { max-width: 220px; margin: 0 auto; }
+  }
+
+  /* ===== PROJECTS ===== */
+  .project-card {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 26px;
+    margin-bottom: 18px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .project-card:hover {
+    border-color: var(--accent-dim);
+    transform: translateY(-2px);
+  }
+  .project-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .project-name {
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .project-name::before {
+    content: '/';
+    color: var(--text-dim);
+    margin-right: 2px;
+  }
+  .project-links { display: flex; gap: 14px; font-family: var(--font-mono); font-size: 0.8rem; }
+  .project-desc { color: var(--text-dim); font-size: 0.94rem; margin-bottom: 14px; }
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--teal);
+    background: rgba(127, 212, 193, 0.08);
+    border: 1px solid rgba(127, 212, 193, 0.2);
+    border-radius: 4px;
+    padding: 3px 9px;
+  }
+
+  /* ===== AWARDS / SKILLS ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+  @media (max-width: 640px) {
+    .two-col { grid-template-columns: 1fr; gap: 48px; }
+  }
+
+  .file-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .file-icon {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .file-content h3 {
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .file-content p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  .skill-bar-wrap { margin-bottom: 16px; }
+  .skill-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    margin-bottom: 6px;
+  }
+  .skill-label .skill-status { color: var(--text-dim); }
+  .skill-track {
+    height: 6px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .skill-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+    border-radius: 3px;
+    transform-origin: left;
+    transform: scaleX(0);
+    animation: fillBar 1.2s ease-out forwards;
+    animation-delay: 0.3s;
+  }
+  @keyframes fillBar { to { transform: scaleX(1); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor { animation: none; opacity: 1; }
+    .skill-fill { animation: none; transform: scaleX(1); }
+    .project-card:hover { transform: none; }
+  }
+
+  /* ===== CONTACT / FOOTER ===== */
+  .contact-box {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 36px;
+    text-align: center;
+  }
+  .contact-box h2 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+  }
+  .contact-box p { color: var(--text-dim); margin-bottom: 24px; }
+  .contact-links {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  footer {
+    padding: 32px 0 48px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  footer .accent { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">ayush<span>.dev</span></div>
+    <div class="nav-links">
+      <a href="#about">about</a>
+      <a href="#projects">projects</a>
+      <a href="#awards">awards</a>
+      <a href="#contact">contact</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="terminal-title">ayush@portfolio: ~</span>
+      </div>
+      <div class="terminal-body">
+        <div class="prompt-line"><span class="prompt-sym">➜</span> <span class="cmd">whoami</span></div>
+        <div class="typed-output">
+          <h1>Ayush Sharma —<br>Class 10 student, <span class="accent">building real things.</span></h1>
+          <p class="tagline">
+            I learn by shipping. Currently exploring HTML &amp; CSS properly, robotics on the side,
+            and "vibe coding" full apps with AI tools to see how far I can push an idea.<span class="cursor"></span>
+          </p>
+        </div>
+        <div class="hero-cta">
+          <a href="#projects" class="btn btn-primary">→ view projects</a>
+          <a href="#contact" class="btn btn-ghost">say hi</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="section-head">
+      <span class="section-path">~/about</span>
+      <h2>A bit about me</h2>
+    </div>
+    <div class="about-grid">
+      <div>
+        <div class="about-photo">
+          <img src="ayush-takumi.jpeg" alt="Ayush Sharma standing beside the Takumi event banner at the Takumi Delhi event" loading="lazy">
+        </div>
+        <p class="about-photo-caption">At Takumi Delhi — finished <span style="color: var(--accent)">top 15</span> as a team</p>
+      </div>
+      <div class="about-text">
+        <p>
+          I'm currently in <strong>Class 10 at ASOSE, Sector 6</strong>. Before that, I studied at
+          <strong>Shiksha Bharti Global School, Sector 8</strong>.
+        </p>
+        <p>
+          At ASOSE I picked up <strong>robotics</strong> — built and competed with a team, and won
+          <span class="highlight">1st prize at the zonal level</span>. That's where I first got hooked
+          on the idea of building things that actually work, not just things that look like they work.
+        </p>
+        <p>
+          On the software side, I've been learning <strong>HTML &amp; CSS</strong> properly — planning to
+          pick up <strong>CSS frameworks and deeper styling</strong> next. Alongside that, I "vibe code"
+          using AI tools, which has let me ship two real, working web apps already (see below).
+        </p>
+        <p>
+          Also part of <strong>Team Takumi</strong> — placed in the <span class="highlight">top 15</span>
+          at the Takumi Delhi event.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="section-head">
+      <span class="section-path">~/projects</span>
+      <h2>Things I've shipped</h2>
+    </div>
+
+    <div class="project-card">
+      <div class="project-head">
+        <span class="project-name">maru-travel-app</span>
+        <div class="project-links">
+          <a href="https://maru-travel-app.vercel.app/" target="_blank" rel="noopener">live</a>
+          <a href="https://github.com/ayushsharma130410-afk/maru-travel-app" target="_blank" rel="noopener">code</a>
+        </div>
+      </div>
+      <p class="project-desc">
+        A full travel-operations web app with separate portals for clients, drivers, guides, and operators —
+        including live GPS tracking, built as a React + Vite app and packaged into an Android APK with Capacitor.
+      </p>
+      <div class="tag-row">
+        <span class="tag">React</span>
+        <span class="tag">Vite</span>
+        <span class="tag">Firebase</span>
+        <span class="tag">Capacitor / Android</span>
+        <span class="tag">Geolocation</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-head">
+        <span class="project-name">attendify</span>
+        <div class="project-links">
+          <a href="https://cms-attend.vercel.app/" target="_blank" rel="noopener">live</a>
+          <a href="https://github.com/ayushsharma130410-afk/attendify" target="_blank" rel="noopener">code</a>
+        </div>
+      </div>
+      <p class="project-desc">
+        An attendance management system with an admin dashboard, login flow, and reporting —
+        built end to end and deployed live.
+      </p>
+      <div class="tag-row">
+        <span class="tag">Web App</span>
+        <span class="tag">Dashboard</span>
+        <span class="tag">Auth</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- AWARDS + SKILLS -->
+  <section id="awards">
+    <div class="section-head">
+      <span class="section-path">~/awards &amp; skills</span>
+      <h2>Stuff I'm proud of / learning</h2>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="file-item">
+          <span class="file-icon">[1st]</span>
+          <div class="file-content">
+            <h3>Zonal Robotics — 1st Prize</h3>
+            <p>Won first place at the zonal robotics competition with my ASOSE team.</p>
+          </div>
+        </div>
+        <div class="file-item">
+          <span class="file-icon">[top15]</span>
+          <div class="file-content">
+            <h3>Takumi Delhi — Top 15</h3>
+            <p>Placed in the top 15 teams at the Takumi Delhi event.</p>
+          </div>
+        </div>
+        <div class="file-item">
+          <span class="file-icon">[live]</span>
+          <div class="file-content">
+            <h3>2 deployed web apps</h3>
+            <p>Shipped and deployed Maru Travel and Attendify, both live and working.</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="skill-bar-wrap">
+          <div class="skill-label"><span>HTML</span><span class="skill-status">comfortable</span></div>
+          <div class="skill-track"><div class="skill-fill" style="--w: 80%; width: 80%;"></div></div>
+        </div>
+        <div class="skill-bar-wrap">
+          <div class="skill-label"><span>CSS</span><span class="skill-status">learning, going deeper</span></div>
+          <div class="skill-track"><div class="skill-fill" style="--w: 55%; width: 55%;"></div></div>
+        </div>
+        <div class="skill-bar-wrap">
+          <div class="skill-label"><span>Vibe coding w/ AI</span><span class="skill-status">shipping real apps</span></div>
+          <div class="skill-track"><div class="skill-fill" style="--w: 85%; width: 85%;"></div></div>
+        </div>
+        <div class="skill-bar-wrap">
+          <div class="skill-label"><span>Robotics</span><span class="skill-status">zonal winner</span></div>
+          <div class="skill-track"><div class="skill-fill" style="--w: 75%; width: 75%;"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="contact-box">
+      <h2>Let's talk</h2>
+      <p>Open to chatting about projects, opportunities, or just tech in general.</p>
+      <div class="contact-links">
+        <a href="mailto:ayushsharma130410@gmail.com" class="btn btn-primary">✉ ayushsharma130410@gmail.com</a>
+        <a href="https://github.com/ayushsharma130410-afk" target="_blank" rel="noopener" class="btn btn-ghost">github.com/ayushsharma130410-afk</a>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  built by Ayush Sharma — <span class="accent">~/portfolio</span> — last updated 2026
+</footer>
+
+</body>
+</html>
