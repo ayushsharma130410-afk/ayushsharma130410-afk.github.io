@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ayush Sharma — Building things, one commit at a time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e0f;
+    --bg-raised: #11161a;
+    --bg-raised-2: #161c20;
+    --border: #232b30;
+    --border-bright: #3a4750;
+    --text: #e8e6e1;
+    --text-dim: #8a9296;
+    --accent: #ff6b35;
+    --accent-dim: #c9501f;
+    --teal: #7fd4c1;
+    --copper: #d7a86e;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* subtle grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  :focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 3px;
+  }
+
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(10, 14, 15, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+  .nav-logo {
+    color: var(--text);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 22px; flex-wrap: wrap; }
+  .nav-links a { color: var(--text-dim); transition: color 0.2s; }
+  .nav-links a:hover { color: var(--teal); text-decoration: none; }
+
+  /* ===== HERO / TERMINAL ===== */
+  .hero {
+    padding: 80px 0 60px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .terminal {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px -24px rgba(0,0,0,0.6);
+    position: relative;
+  }
+
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #161c20;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+  .terminal-title {
+    margin-left: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  .terminal-body {
+    padding: 28px 28px 32px;
+    font-family: var(--font-mono);
+    font-size: 0.92rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 28px;
+    align-items: center;
+  }
+
+  @media (min-width: 760px) {
+    .terminal-body {
+      grid-template-columns: 1.3fr 1fr;
+    }
+  }
+
+  .prompt-line { color: var(--text-dim); margin-bottom: 4px; }
+  .prompt-line .prompt-sym { color: var(--teal); }
+  .prompt-line .cmd { color: var(--text); }
+
+  .typed-output {
+    margin: 18px 0 0;
+  }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 5.4vw, 3.1rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 14px;
+  }
+  .hero h1 .accent { color: var(--accent); }
+
+  .hero p.tagline {
+    font-family: var(--font-body);
+    font-size: 1.02rem;
+    color: var(--text-dim);
+    max-width: 520px;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 9px;
+    height: 1.1em;
+    background: var(--teal);
+    margin-left: 4px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .hero-cta {
+    display: flex;
+    gap: 12px;
+    margin-top: 26px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 11px 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    background: transparent;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0e0f;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+    text-decoration: none;
+  }
+  .btn-ghost {
+    color: var(--text);
+    background: transparent;
+  }
+  .btn-ghost:hover {
+    border-color: var(--teal);
+    color: var(--teal);
+    text-decoration: none;
+  }
+
+  /* ===== HERO 3D BOARD (signature element) ===== */
+  .board-stage {
+    perspective: 900px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+  }
+
+  .board {
+    width: 220px;
+    height: 220px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.15s ease-out;
+    will-change: transform;
+  }
+
+  .board svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 18px 30px rgba(0,0,0,0.55));
+  }
+
+  .board-caption {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  .trace { stroke: var(--copper); stroke-width: 1.4; fill: none; opacity: 0.55; }
+  .trace-glow { stroke: var(--teal); stroke-width: 1.4; fill: none; stroke-dasharray: 6 220; stroke-dashoffset: 0; animation: travel 3.6s linear infinite; opacity: 0.9; }
+  .trace-glow.d2 { animation-delay: 1.1s; stroke: var(--accent); }
+  .trace-glow.d3 { animation-delay: 2.2s; }
+  @keyframes travel { from { stroke-dashoffset: 226; } to { stroke-dashoffset: -226; } }
+
+  .led { fill: var(--teal); animation: pulse-led 2.2s ease-in-out infinite; }
+  .led.b { animation-delay: 0.7s; fill: var(--accent); }
+  .led.c { animation-delay: 1.4s; }
+  @keyframes pulse-led { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .board { transition: none; }
+    .trace-glow { animation: none; opacity: 0.5; }
+    .led { animation: none; opacity: 0.8; }
+  }
+
+  /* ===== SECTION SHARED ===== */
+  section { padding: 64px 0; border-top: 1px solid var(--border); }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+  }
+  .section-path {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 10px;
+  }
+  .section-head h2 {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 600;
+  }
+  .section-head.automation-head {
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  .section-head.automation-head > div:first-child {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .relay-stage {
+    perspective: 600px;
+    width: 70px;
+    height: 70px;
+    flex-shrink: 0;
+  }
+  .relay-cube {
+    width: 56px;
+    height: 56px;
+    position: relative;
+    margin: 7px auto;
+    transform-style: preserve-3d;
+    animation: spin-cube 9s linear infinite;
+    transition: animation-play-state 0.2s;
+  }
+  .relay-stage:hover .relay-cube { animation-play-state: paused; }
+  @keyframes spin-cube {
+    from { transform: rotateX(-18deg) rotateY(0deg); }
+    to { transform: rotateX(-18deg) rotateY(360deg); }
+  }
+  .face {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--border-bright);
+    background: var(--bg-raised-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .face-front  { transform: translateZ(28px); background: var(--bg-raised); }
+  .face-back   { transform: translateZ(-28px) rotateY(180deg); }
+  .face-right  { transform: rotateY(90deg) translateZ(28px); }
+  .face-left   { transform: rotateY(-90deg) translateZ(28px); }
+  .face-top    { transform: rotateX(90deg) translateZ(28px); }
+  .face-bottom { transform: rotateX(-90deg) translateZ(28px); }
+
+  .relay-led {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px 2px rgba(255,107,53,0.7);
+    animation: pulse-led 2.2s ease-in-out infinite;
+  }
+
+  @media (max-width: 560px) {
+    .section-head.automation-head { flex-direction: column; align-items: flex-start; gap: 18px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .relay-cube { animation: none; transform: rotateX(-18deg) rotateY(25deg); }
+  }
+
+  /* ===== ABOUT ===== */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 36px;
+    align-items: start;
+  }
+  .about-photo {
+    width: 100%;
+    max-width: 220px;
+    aspect-ratio: 3/4;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    position: relative;
+    background: var(--bg-raised-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .about-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .about-photo video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+  .about-photo.is-playing {
+    border-color: var(--teal);
+  }
+  .about-photo-caption {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 10px;
+    text-align: center;
+  }
+  .about-text p { margin-bottom: 14px; color: var(--text-dim); }
+  .about-text strong { color: var(--text); font-weight: 600; }
+  .about-text .highlight { color: var(--teal); }
+
+  @media (max-width: 640px) {
+    .about-grid { grid-template-columns: 1fr; }
+    .about-photo { max-width: 220px; margin: 0 auto; }
+  }
+
+  /* ===== PROJECT / BUILD CARDS (shared tilt mechanism) ===== */
+  .tilt-card {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 26px 28px;
+    margin-bottom: 18px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.12s ease-out, border-color 0.2s;
+    will-change: transform;
+  }
+  .tilt-card:hover { border-color: var(--border-bright); }
+
+  .tilt-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    background: radial-gradient(circle 220px at var(--mx, 50%) var(--my, 50%), rgba(127,212,193,0.10), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+  }
+  .tilt-card:hover::before { opacity: 1; }
+
+  .project-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .project-name {
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .project-name::before {
+    content: '/';
+    color: var(--text-dim);
+    margin-right: 2px;
+  }
+  .project-links { display: flex; gap: 14px; font-family: var(--font-mono); font-size: 0.8rem; position: relative; z-index: 2; }
+  .project-desc { color: var(--text-dim); font-size: 0.94rem; margin-bottom: 14px; }
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--teal);
+    background: rgba(127, 212, 193, 0.08);
+    border: 1px solid rgba(127, 212, 193, 0.2);
+    border-radius: 4px;
+    padding: 3px 9px;
+  }
+  .tag.copper {
+    color: var(--copper);
+    background: rgba(215, 168, 110, 0.08);
+    border-color: rgba(215, 168, 110, 0.25);
+  }
+
+  /* ===== AUTOMATION BUILD CARDS ===== */
+  .build-card {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 560px) {
+    .build-card { grid-template-columns: 48px 1fr; }
+  }
+
+  .build-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    background: var(--bg-raised-2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  @media (max-width: 560px) { .build-icon-wrap { width: 48px; height: 48px; } }
+  .build-icon-wrap svg { width: 32px; height: 32px; }
+  @media (max-width: 560px) { .build-icon-wrap svg { width: 24px; height: 24px; } }
+
+  .build-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--teal);
+    margin-top: 10px;
+  }
+  .build-status .pulse-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 0 0 0 rgba(127,212,193,0.6);
+    animation: pulse-ring 2s infinite;
+  }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(127,212,193,0.55); }
+    70% { box-shadow: 0 0 0 7px rgba(127,212,193,0); }
+    100% { box-shadow: 0 0 0 0 rgba(127,212,193,0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .build-status .pulse-dot { animation: none; }
+  }
+
+  /* ===== AWARDS / SKILLS ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+  @media (max-width: 640px) {
+    .two-col { grid-template-columns: 1fr; gap: 48px; }
+  }
+
+  .file-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .file-icon {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .file-content h3 {
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .file-content p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  .skill-bar-wrap { margin-bottom: 16px; }
+  .skill-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    margin-bottom: 6px;
+  }
+  .skill-label .skill-status { color: var(--text-dim); }
+  .skill-track {
+    height: 6px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .skill-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+    border-radius: 3px;
+    transform-origin: left;
+    transform: scaleX(0);
+    animation: fillBar 1.2s ease-out forwards;
+    animation-delay: 0.3s;
+  }
+  @keyframes fillBar { to { transform: scaleX(1); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor { animation: none; opacity: 1; }
+    .skill-fill { animation: none; transform: scaleX(1); }
+    .tilt-card:hover { transform: none !important; }
+  }
+
+  /* ===== CONTACT / FOOTER ===== */
+  .contact-box {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 36px;
+    text-align: center;
+  }
+  .contact-box h2 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+  }
+  .contact-box p { color: var(--text-dim); margin-bottom: 24px; }
+  .contact-photo {
+    width: 140px;
+    aspect-ratio: 3/4;
+    margin: 0 auto 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .contact-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .contact-photo-caption {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 22px;
+  }
+  .contact-links {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  footer {
+    padding: 32px 0 48px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  footer .accent { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">ayush<span>.dev</span></div>
+    <div class="nav-links">
+      <a href="#about">about</a>
+      <a href="#projects">projects</a>
+      <a href="#automation">automation</a>
+      <a href="#awards">awards</a>
+      <a href="#contact">contact</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="terminal-title">ayush@portfolio: ~</span>
+      </div>
+      <div class="terminal-body">
+        <div>
+          <div class="prompt-line"><span class="prompt-sym">➜</span> <span class="cmd">whoami</span></div>
+          <div class="typed-output">
+            <h1>Ayush Sharma —<br>Class 10 student, <span class="accent">building real things.</span></h1>
+            <p class="tagline">
+              I learn by shipping. Currently exploring HTML &amp; CSS properly, robotics on the side,
+              and "vibe coding" full apps with AI tools — then pointing that same energy at real-world
+              automation: lights, irrigation, water dispensing, all running on ESP32.<span class="cursor"></span>
+            </p>
+          </div>
+          <div class="hero-cta">
+            <a href="#projects" class="btn btn-primary">→ view projects</a>
+            <a href="#automation" class="btn btn-ghost">see the hardware</a>
+          </div>
+        </div>
+
+        <div>
+          <div class="board-stage">
+            <div class="board" id="board">
+              <svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10" y="10" width="200" height="200" rx="14" fill="#0d3b2e" stroke="#1f5a46" stroke-width="2"/>
+                <path class="trace" d="M30 40 H120 V70 H190" />
+                <path class="trace" d="M30 90 H80 V160 H150" />
+                <path class="trace" d="M50 30 V100 H30 V180" />
+                <path class="trace-glow" d="M30 40 H120 V70 H190" />
+                <path class="trace-glow d2" d="M30 90 H80 V160 H150" />
+                <path class="trace-glow d3" d="M50 30 V100 H30 V180" />
+                <rect x="78" y="78" width="64" height="64" rx="6" fill="#11161a" stroke="#3a4750" stroke-width="1.5"/>
+                <rect x="88" y="88" width="44" height="44" rx="3" fill="#1a2228" stroke="#516068" stroke-width="1"/>
+                <text x="110" y="113" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a9296">ESP32</text>
+                <circle class="led" cx="40" cy="40" r="4" />
+                <circle class="led b" cx="180" cy="60" r="4" />
+                <circle class="led c" cx="40" cy="180" r="4" />
+                <circle cx="190" cy="190" r="9" fill="#161c20" stroke="#3a4750" stroke-width="1.5"/>
+                <circle cx="190" cy="190" r="9" fill="none" stroke="#3a4750" stroke-width="1.5"/>
+              </svg>
+            </div>
+          </div>
+          <p class="board-caption">move your cursor over the board</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="section-head">
+      <span class="section-path">~/about</span>
+      <h2>A bit about me</h2>
+    </div>
+    <div class="about-grid">
+      <div>
+        <div class="about-photo">
+          <video id="about-video" src="ayush-intro.mp4" muted playsinline preload="metadata" aria-label="Ayush Sharma intro clip"></video>
+        </div>
+        <p class="about-photo-caption">that's me</p>
+      </div>
+      <div class="about-text">
+        <p>
+          I'm currently in <strong>Class 10 at ASOSE, Sector 6</strong>. Before that, I studied at
+          <strong>Shiksha Bharti Global School, Sector 8</strong>.
+        </p>
+        <p>
+          At ASOSE I picked up <strong>robotics</strong> — built and competed with a team, and won
+          <span class="highlight">1st prize at the zonal level</span>. That's where I first got hooked
+          on the idea of building things that actually work, not just things that look like they work.
+        </p>
+        <p>
+          On the software side, I've been learning <strong>HTML &amp; CSS</strong> properly — planning to
+          pick up <strong>CSS frameworks and deeper styling</strong> next. Alongside that, I "vibe code"
+          using AI tools, which has let me ship two real, working web apps already (see below).
+        </p>
+        <p>
+          That same hands-on streak carries into hardware: I build <strong>ESP32-based automation</strong> —
+          home lighting, weather-aware irrigation, and automated water dispensing — see
+          <a href="#automation">~/automation</a> below.
+        </p>
+        <p>
+          Also part of <strong>Team Takumi</strong> — placed in the <span class="highlight">top 15</span>
+          at the Takumi Delhi event.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="section-head">
+      <span class="section-path">~/projects</span>
+      <h2>Things I've shipped</h2>
+    </div>
+
+    <div class="tilt-card">
+      <div class="project-head">
+        <span class="project-name">maru-travel-app</span>
+        <div class="project-links">
+          <a href="https://maru-travel-app.vercel.app/" target="_blank" rel="noopener">live</a>
+          <a href="https://github.com/ayushsharma130410-afk/maru-travel-app" target="_blank" rel="noopener">code</a>
+        </div>
+      </div>
+      <p class="project-desc">
+        A full travel-operations web app with separate portals for clients, drivers, guides, and operators —
+        including live GPS tracking, built as a React + Vite app and packaged into an Android APK with Capacitor.
+      </p>
+      <div class="tag-row">
+        <span class="tag">React</span>
+        <span class="tag">Vite</span>
+        <span class="tag">Firebase</span>
+        <span class="tag">Capacitor / Android</span>
+        <span class="tag">Geolocation</span>
+      </div>
+    </div>
+
+    <div class="tilt-card">
+      <div class="project-head">
+        <span class="project-name">attendify</span>
+        <div class="project-links">
+          <a href="https://cms-attend.vercel.app/" target="_blank" rel="noopener">live</a>
+          <a href="https://github.com/ayushsharma130410-afk/attendify" target="_blank" rel="noopener">code</a>
+        </div>
+      </div>
+      <p class="project-desc">
+        An attendance management system with an admin dashboard, login flow, and reporting —
+        built end to end and deployed live.
+      </p>
+      <div class="tag-row">
+        <span class="tag">Web App</span>
+        <span class="tag">Dashboard</span>
+        <span class="tag">Auth</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUTOMATION (NEW) -->
+  <section id="automation">
+    <div class="section-head automation-head">
+      <div>
+        <span class="section-path">~/automation</span>
+        <h2>Hardware I've built and deployed</h2>
+      </div>
+      <div class="relay-stage" id="relayStage">
+        <div class="relay-cube" id="relayCube">
+          <div class="face face-front"><span class="relay-led"></span></div>
+          <div class="face face-back"></div>
+          <div class="face face-right"></div>
+          <div class="face face-left"></div>
+          <div class="face face-top"></div>
+          <div class="face face-bottom"></div>
+        </div>
+      </div>
+    </div>
+    <p class="section-sub">
+      Real ESP32-based builds running outside the browser — controlling lights, water, and irrigation
+      based on actual conditions instead of manual switches.
+    </p>
+
+    <div class="tilt-card build-card">
+      <div class="build-icon-wrap">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 4 C10 4 6 8 6 13 C6 17 8.5 19.5 10 21.5 V25 H22 V21.5 C23.5 19.5 26 17 26 13 C26 8 22 4 16 4 Z" stroke="#7fd4c1" stroke-width="1.6"/>
+          <path d="M13 28 H19" stroke="#7fd4c1" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M14 25 V28 M18 25 V28" stroke="#7fd4c1" stroke-width="1.6"/>
+          <path d="M16 9 L13.5 14 H16.5 L14.5 19" stroke="#ff6b35" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="project-head">
+          <span class="project-name">smart-home-lighting</span>
+        </div>
+        <p class="project-desc">
+          ESP32-controlled home lighting system that I can switch on and off from anywhere in the world,
+          not just on the same Wi-Fi network. The board handles the internet connection and relay
+          switching, so the lights at home respond to commands sent remotely.
+        </p>
+        <div class="tag-row">
+          <span class="tag copper">ESP32</span>
+          <span class="tag copper">Relay control</span>
+          <span class="tag">Remote access</span>
+          <span class="tag">Home automation</span>
+        </div>
+        <div class="build-status"><span class="pulse-dot"></span> running at home</div>
+      </div>
+    </div>
+
+    <div class="tilt-card build-card">
+      <div class="build-icon-wrap">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 3 C16 3 9 13 9 19 C9 23 12 26 16 26 C20 26 23 23 23 19 C23 13 16 3 16 3 Z" stroke="#7fd4c1" stroke-width="1.6"/>
+          <path d="M5 22 C7 22 7 25 9 25 C11 25 11 22 13 22" stroke="#ff6b35" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M19 22 C21 22 21 25 23 25 C25 25 25 22 27 22" stroke="#ff6b35" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="project-head">
+          <span class="project-name">field-irrigation — weather-aware watering</span>
+        </div>
+        <p class="project-desc">
+          Agricultural irrigation automation that decides when to water a field based on real weather
+          and the water cycle, instead of running on a fixed timer. Aims to cut down on manual guesswork
+          and wasted water for crops.
+        </p>
+        <div class="tag-row">
+          <span class="tag copper">ESP32</span>
+          <span class="tag copper">Sensors</span>
+          <span class="tag">Weather-based logic</span>
+          <span class="tag">Agriculture</span>
+        </div>
+        <div class="build-status"><span class="pulse-dot"></span> running at home</div>
+      </div>
+    </div>
+
+    <div class="tilt-card build-card">
+      <div class="build-icon-wrap">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11 5 H21 V9 H11 Z" stroke="#7fd4c1" stroke-width="1.6"/>
+          <path d="M9 9 H23 L21 27 H11 L9 9 Z" stroke="#7fd4c1" stroke-width="1.6"/>
+          <path d="M14 14 C14 14 12 17 12 19 C12 20.5 13 21.5 14.5 21.5 C16 21.5 17 20.5 17 19 C17 17 14 14 14 14 Z" fill="#ff6b35" opacity="0.85"/>
+        </svg>
+      </div>
+      <div>
+        <div class="project-head">
+          <span class="project-name">auto-dispenser — water dispensing automation</span>
+        </div>
+        <p class="project-desc">
+          An automated water dispenser build that handles dispensing without someone manually operating it —
+          part of the same ESP32 automation line as the lighting and irrigation builds.
+        </p>
+        <div class="tag-row">
+          <span class="tag copper">ESP32</span>
+          <span class="tag copper">Automation</span>
+          <span class="tag">Water dispensing</span>
+        </div>
+        <div class="build-status"><span class="pulse-dot"></span> running at home</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AWARDS + SKILLS -->
+  <section id="awards">
+    <div class="section-head">
+      <span class="section-path">~/awards &amp; skills</span>
+      <h2>Stuff I'm proud of / learning</h2>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="file-item">
+          <span class="file-icon">[1st]</span>
+          <div class="file-content">
+            <h3>Zonal Robotics — 1st Prize</h3>
+            <p>Won first place at the zonal robotics competition with my ASOSE team.</p>
+          </div>
+        </div>
+        <div class="file-item">
+          <span class="file-icon">[top15]</span>
+          <div class="file-content">
+            <h3>Takumi Delhi — Top 15</h3>
+            <p>Placed in the top 15 teams at the Takumi Delhi event.</p>
+          </div>
+        </div>
+        <div class="file-item">
+          <span class="file-icon">[live]</span>
+          <div class="file-content">
+            <h3>2 deployed web apps</h3>
+            <p>Shipped and deployed Maru Travel and Attendify, both live and working.</p>
+          </div>
+        </div>
+        <div class="file-item">
+          <span class="file-icon">[hw]</span>
+          <div class="file-content">
+            <h3>3 ESP32 automation builds</h3>
+            <p>Home lighting, weather-based irrigation, and water dispensing — all running for real.</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="skill-bar-wrap">
+          <div class="skill-label"><span>HTML</span><span class="skill-status">comfortable</span></div>
+          <div class="skill-track"><div class="skill-fill" style="--w: 80%; width: 80%;"></div></div>
+        </div>
+        <div class="skill-bar-wrap">
+          <div class="skill-label"><span>CSS</span><span class="skill-status">learning, going deeper</span></div>
+          <div class="skill-track"><div class="skill-fill" style="--w: 55%; width: 55%;"></div></div>
+        </div>
+        <div class="skill-bar-wrap">
+          <div class="skill-label"><span>Vibe coding w/ AI</span><span class="skill-status">shipping real apps</span></div>
+          <div class="skill-track"><div class="skill-fill" style="--w: 85%; width: 85%;"></div></div>
+        </div>
+        <div class="skill-bar-wrap">
+          <div class="skill-label"><span>Robotics &amp; ESP32</span><span class="skill-status">zonal winner, 3 builds live</span></div>
+          <div class="skill-track"><div class="skill-fill" style="--w: 78%; width: 78%;"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="contact-box">
+      <div class="contact-photo">
+        <img src="ayush-takumi.jpeg" alt="Ayush Sharma standing beside the Takumi event banner at the Takumi Delhi event" loading="lazy">
+      </div>
+      <p class="contact-photo-caption">At Takumi Delhi — finished <span style="color: var(--accent)">top 15</span> as a team</p>
+      <h2>Let's talk</h2>
+      <p>Open to chatting about projects, opportunities, or just tech in general.</p>
+      <div class="contact-links">
+        <a href="mailto:ayushsharma130410@gmail.com" class="btn btn-primary">✉ ayushsharma130410@gmail.com</a>
+        <a href="https://github.com/ayushsharma130410-afk" target="_blank" rel="noopener" class="btn btn-ghost">github.com/ayushsharma130410-afk</a>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  built by Ayush Sharma — <span class="accent">~/portfolio</span> — last updated 2026
+</footer>
+
+<script>
+(function() {
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Hero ESP32 board 3D tilt
+  var stage = document.querySelector('.board-stage');
+  var board = document.getElementById('board');
+  if (stage && board && !reduceMotion) {
+    stage.addEventListener('mousemove', function(e) {
+      var rect = stage.getBoundingClientRect();
+      var x = (e.clientX - rect.left) / rect.width - 0.5;
+      var y = (e.clientY - rect.top) / rect.height - 0.5;
+      board.style.transform = 'rotateY(' + (x * 28) + 'deg) rotateX(' + (y * -28) + 'deg)';
+    });
+    stage.addEventListener('mouseleave', function() {
+      board.style.transform = 'rotateY(0deg) rotateX(0deg)';
+    });
+    // gentle touch support
+    stage.addEventListener('touchmove', function(e) {
+      var touch = e.touches[0];
+      var rect = stage.getBoundingClientRect();
+      var x = (touch.clientX - rect.left) / rect.width - 0.5;
+      var y = (touch.clientY - rect.top) / rect.height - 0.5;
+      board.style.transform = 'rotateY(' + (x * 22) + 'deg) rotateX(' + (y * -22) + 'deg)';
+    }, { passive: true });
+  }
+
+  // Tilt cards (projects + automation builds)
+  if (!reduceMotion) {
+    document.querySelectorAll('.tilt-card').forEach(function(card) {
+      card.addEventListener('mousemove', function(e) {
+        var rect = card.getBoundingClientRect();
+        var px = (e.clientX - rect.left) / rect.width;
+        var py = (e.clientY - rect.top) / rect.height;
+        var rx = (py - 0.5) * -6;
+        var ry = (px - 0.5) * 6;
+        card.style.transform = 'perspective(900px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) translateY(-2px)';
+        card.style.setProperty('--mx', (px * 100) + '%');
+        card.style.setProperty('--my', (py * 100) + '%');
+      });
+      card.addEventListener('mouseleave', function() {
+        card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+      });
+    });
+  }
+  // About video: play once when scrolled into view
+  var aboutVideo = document.getElementById('about-video');
+  var aboutPhotoBox = document.querySelector('.about-photo');
+  if (aboutVideo) {
+    var hasPlayed = false;
+    var io = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting && !hasPlayed) {
+          hasPlayed = true;
+          aboutPhotoBox.classList.add('is-playing');
+          aboutVideo.play().catch(function() { /* autoplay blocked, ignore */ });
+          io.disconnect();
+        }
+      });
+    }, { threshold: 0.5 });
+    io.observe(aboutVideo);
+    aboutVideo.addEventListener('ended', function() {
+      aboutPhotoBox.classList.remove('is-playing');
+    });
+  }
+
+  // Relay cube: slight extra tilt toward cursor on top of its idle spin
+  var relayStage = document.getElementById('relayStage');
+  var relayCube = document.getElementById('relayCube');
+  if (relayStage && relayCube && !reduceMotion) {
+    relayStage.addEventListener('mousemove', function(e) {
+      var rect = relayStage.getBoundingClientRect();
+      var x = (e.clientX - rect.left) / rect.width - 0.5;
+      var y = (e.clientY - rect.top) / rect.height - 0.5;
+      relayCube.style.transform = 'rotateX(' + (-18 + y * -20) + 'deg) rotateY(' + (x * 40) + 'deg)';
+    });
+    relayStage.addEventListener('mouseleave', function() {
+      relayCube.style.transform = '';
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
