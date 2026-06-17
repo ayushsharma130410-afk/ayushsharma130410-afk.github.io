@@ -365,6 +365,12 @@
   @media (prefers-reduced-motion: reduce) {
     .relay-cube { animation: none; transform: rotateX(-18deg) rotateY(25deg); }
   }
+  @media (prefers-reduced-motion: reduce) {
+    .about-photo-frame, .about-photo-frame:hover, .about-photo-frame.is-grown {
+      transition: none;
+      transform: none;
+    }
+  }
 
   /* ===== ABOUT ===== */
   .about-grid {
@@ -377,14 +383,30 @@
     width: 100%;
     max-width: 220px;
     aspect-ratio: 3/4;
+    position: relative;
+    z-index: 1;
+  }
+  .about-photo-frame {
+    width: 100%;
+    height: 100%;
     border-radius: 8px;
     overflow: hidden;
     border: 1px solid var(--border);
-    position: relative;
     background: var(--bg-raised-2);
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s, box-shadow 0.35s;
+    transform-origin: center center;
+    cursor: pointer;
+  }
+  .about-photo-frame:hover,
+  .about-photo-frame.is-grown {
+    transform: scale(1.45);
+    z-index: 30;
+    border-color: var(--teal);
+    box-shadow: 0 30px 70px -20px rgba(0,0,0,0.7);
   }
   .about-photo img {
     width: 100%;
@@ -398,7 +420,7 @@
     object-fit: contain;
     display: block;
   }
-  .about-photo.is-playing {
+  .about-photo-frame.is-playing {
     border-color: var(--teal);
   }
   .sound-toggle {
@@ -417,9 +439,13 @@
     cursor: pointer;
     backdrop-filter: blur(3px);
     transition: border-color 0.2s, color 0.2s;
+    z-index: 2;
   }
   .sound-toggle:hover { border-color: var(--teal); color: var(--teal); }
   .sound-toggle.is-unmuted { color: var(--teal); border-color: var(--teal); }
+  @media (hover: none) {
+    .about-photo-frame:hover { transform: none; box-shadow: none; }
+  }
   .about-photo-caption {
     font-family: var(--font-mono);
     font-size: 0.7rem;
@@ -725,13 +751,15 @@
     <div class="about-grid">
       <div>
         <div class="about-photo">
-          <video id="about-video" src="ayush-intro.mp4" playsinline preload="metadata" aria-label="Ayush Sharma intro clip"></video>
-          <button type="button" id="about-video-sound" class="sound-toggle" aria-label="Toggle sound" aria-pressed="false">
-            <svg id="icon-muted" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 L6 9 H3 V15 H6 L11 19 Z"/><line x1="16" y1="9" x2="21" y2="15"/><line x1="21" y1="9" x2="16" y2="15"/></svg>
-            <svg id="icon-unmuted" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M11 5 L6 9 H3 V15 H6 L11 19 Z"/><path d="M15.5 8.5 a5 5 0 0 1 0 7"/><path d="M18 6 a9 9 0 0 1 0 12"/></svg>
-          </button>
+          <div class="about-photo-frame" id="about-photo-frame">
+            <video id="about-video" src="ayush-intro.mp4" playsinline preload="metadata" aria-label="Ayush Sharma intro clip"></video>
+            <button type="button" id="about-video-sound" class="sound-toggle" aria-label="Toggle sound" aria-pressed="false">
+              <svg id="icon-muted" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 L6 9 H3 V15 H6 L11 19 Z"/><line x1="16" y1="9" x2="21" y2="15"/><line x1="21" y1="9" x2="16" y2="15"/></svg>
+              <svg id="icon-unmuted" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M11 5 L6 9 H3 V15 H6 L11 19 Z"/><path d="M15.5 8.5 a5 5 0 0 1 0 7"/><path d="M18 6 a9 9 0 0 1 0 12"/></svg>
+            </button>
+          </div>
         </div>
-        <p class="about-photo-caption">that's me — tap the speaker for sound</p>
+        <p class="about-photo-caption">that's me — hover to play, tap speaker to mute</p>
       </div>
       <div class="about-text">
         <p>
@@ -1034,12 +1062,18 @@
       });
     });
   }
-  // About video: play once when scrolled into view, with sound if the browser allows it
+  // About video: plays on scroll into view, grows + replays on hover, with sound when allowed
   var aboutVideo = document.getElementById('about-video');
-  var aboutPhotoBox = document.querySelector('.about-photo');
+  var aboutFrame = document.getElementById('about-photo-frame');
   var soundToggle = document.getElementById('about-video-sound');
   var iconMuted = document.getElementById('icon-muted');
   var iconUnmuted = document.getElementById('icon-unmuted');
+  var userHasInteracted = false;
+
+  // Any tap/click anywhere unlocks audio for later autoplay attempts
+  ['pointerdown', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
+    document.addEventListener(evt, function() { userHasInteracted = true; }, { once: true, passive: true });
+  });
 
   function setSoundIcon(unmuted) {
     if (!soundToggle) return;
@@ -1049,25 +1083,35 @@
     if (iconUnmuted) iconUnmuted.style.display = unmuted ? 'block' : 'none';
   }
 
-  if (aboutVideo) {
-    var hasPlayed = false;
+  function attemptPlay(fromStart) {
+    if (!aboutVideo) return;
+    if (fromStart) {
+      try { aboutVideo.currentTime = 0; } catch (e) {}
+    }
+    aboutVideo.muted = false;
+    var p = aboutVideo.play();
+    if (p && p.catch) {
+      p.then(function() {
+        setSoundIcon(true);
+      }).catch(function() {
+        // Browser blocked sound — be honest about it in the UI instead of silently playing muted
+        aboutVideo.muted = true;
+        setSoundIcon(false);
+        aboutVideo.play().catch(function() {});
+      });
+    }
+  }
+
+  if (aboutVideo && aboutFrame) {
     setSoundIcon(false);
+    var hasAutoPlayed = false;
 
     var io = new IntersectionObserver(function(entries) {
       entries.forEach(function(entry) {
-        if (entry.isIntersecting && !hasPlayed) {
-          hasPlayed = true;
-          aboutPhotoBox.classList.add('is-playing');
-          // Try playing with sound first; browsers may block this without prior interaction
-          aboutVideo.muted = false;
-          aboutVideo.play().then(function() {
-            setSoundIcon(true);
-          }).catch(function() {
-            // Blocked: fall back to muted autoplay, user can tap to unmute
-            aboutVideo.muted = true;
-            setSoundIcon(false);
-            aboutVideo.play().catch(function() { /* ignore, user can press play via tap */ });
-          });
+        if (entry.isIntersecting && !hasAutoPlayed) {
+          hasAutoPlayed = true;
+          aboutFrame.classList.add('is-playing');
+          attemptPlay(true);
           io.disconnect();
         }
       });
@@ -1075,11 +1119,29 @@
     io.observe(aboutVideo);
 
     aboutVideo.addEventListener('ended', function() {
-      aboutPhotoBox.classList.remove('is-playing');
+      aboutFrame.classList.remove('is-playing', 'is-grown');
     });
 
+    // Hover: grow the frame and replay from the start, with sound
+    var isHovering = false;
+    aboutFrame.addEventListener('mouseenter', function() {
+      isHovering = true;
+      aboutFrame.classList.add('is-grown', 'is-playing');
+      attemptPlay(true);
+    });
+    aboutFrame.addEventListener('mouseleave', function() {
+      isHovering = false;
+      aboutFrame.classList.remove('is-grown');
+    });
+    // Touch devices: tap to grow + play (no hover available)
+    aboutFrame.addEventListener('touchstart', function() {
+      aboutFrame.classList.add('is-grown', 'is-playing');
+      attemptPlay(true);
+    }, { passive: true });
+
     if (soundToggle) {
-      soundToggle.addEventListener('click', function() {
+      soundToggle.addEventListener('click', function(e) {
+        e.stopPropagation();
         aboutVideo.muted = !aboutVideo.muted;
         setSoundIcon(!aboutVideo.muted);
         if (aboutVideo.paused) {
@@ -1088,6 +1150,7 @@
       });
     }
   }
+
 
   // Relay cube: slight extra tilt toward cursor on top of its idle spin
   var relayStage = document.getElementById('relayStage');
