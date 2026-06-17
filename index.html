@@ -401,6 +401,25 @@
   .about-photo.is-playing {
     border-color: var(--teal);
   }
+  .sound-toggle {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(10, 14, 15, 0.7);
+    border: 1px solid var(--border-bright);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(3px);
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .sound-toggle:hover { border-color: var(--teal); color: var(--teal); }
+  .sound-toggle.is-unmuted { color: var(--teal); border-color: var(--teal); }
   .about-photo-caption {
     font-family: var(--font-mono);
     font-size: 0.7rem;
@@ -609,26 +628,6 @@
     margin-bottom: 10px;
   }
   .contact-box p { color: var(--text-dim); margin-bottom: 24px; }
-  .contact-photo {
-    width: 140px;
-    aspect-ratio: 3/4;
-    margin: 0 auto 10px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-  }
-  .contact-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .contact-photo-caption {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    margin-bottom: 22px;
-  }
   .contact-links {
     display: flex;
     justify-content: center;
@@ -726,9 +725,13 @@
     <div class="about-grid">
       <div>
         <div class="about-photo">
-          <video id="about-video" src="ayush-intro.mp4" muted playsinline preload="metadata" aria-label="Ayush Sharma intro clip"></video>
+          <video id="about-video" src="ayush-intro.mp4" playsinline preload="metadata" aria-label="Ayush Sharma intro clip"></video>
+          <button type="button" id="about-video-sound" class="sound-toggle" aria-label="Toggle sound" aria-pressed="false">
+            <svg id="icon-muted" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 L6 9 H3 V15 H6 L11 19 Z"/><line x1="16" y1="9" x2="21" y2="15"/><line x1="21" y1="9" x2="16" y2="15"/></svg>
+            <svg id="icon-unmuted" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M11 5 L6 9 H3 V15 H6 L11 19 Z"/><path d="M15.5 8.5 a5 5 0 0 1 0 7"/><path d="M18 6 a9 9 0 0 1 0 12"/></svg>
+          </button>
         </div>
-        <p class="about-photo-caption">that's me</p>
+        <p class="about-photo-caption">that's me — tap the speaker for sound</p>
       </div>
       <div class="about-text">
         <p>
@@ -971,10 +974,6 @@
   <!-- CONTACT -->
   <section id="contact">
     <div class="contact-box">
-      <div class="contact-photo">
-        <img src="ayush-takumi.jpeg" alt="Ayush Sharma standing beside the Takumi event banner at the Takumi Delhi event" loading="lazy">
-      </div>
-      <p class="contact-photo-caption">At Takumi Delhi — finished <span style="color: var(--accent)">top 15</span> as a team</p>
       <h2>Let's talk</h2>
       <p>Open to chatting about projects, opportunities, or just tech in general.</p>
       <div class="contact-links">
@@ -1035,25 +1034,59 @@
       });
     });
   }
-  // About video: play once when scrolled into view
+  // About video: play once when scrolled into view, with sound if the browser allows it
   var aboutVideo = document.getElementById('about-video');
   var aboutPhotoBox = document.querySelector('.about-photo');
+  var soundToggle = document.getElementById('about-video-sound');
+  var iconMuted = document.getElementById('icon-muted');
+  var iconUnmuted = document.getElementById('icon-unmuted');
+
+  function setSoundIcon(unmuted) {
+    if (!soundToggle) return;
+    soundToggle.classList.toggle('is-unmuted', unmuted);
+    soundToggle.setAttribute('aria-pressed', unmuted ? 'true' : 'false');
+    if (iconMuted) iconMuted.style.display = unmuted ? 'none' : 'block';
+    if (iconUnmuted) iconUnmuted.style.display = unmuted ? 'block' : 'none';
+  }
+
   if (aboutVideo) {
     var hasPlayed = false;
+    setSoundIcon(false);
+
     var io = new IntersectionObserver(function(entries) {
       entries.forEach(function(entry) {
         if (entry.isIntersecting && !hasPlayed) {
           hasPlayed = true;
           aboutPhotoBox.classList.add('is-playing');
-          aboutVideo.play().catch(function() { /* autoplay blocked, ignore */ });
+          // Try playing with sound first; browsers may block this without prior interaction
+          aboutVideo.muted = false;
+          aboutVideo.play().then(function() {
+            setSoundIcon(true);
+          }).catch(function() {
+            // Blocked: fall back to muted autoplay, user can tap to unmute
+            aboutVideo.muted = true;
+            setSoundIcon(false);
+            aboutVideo.play().catch(function() { /* ignore, user can press play via tap */ });
+          });
           io.disconnect();
         }
       });
     }, { threshold: 0.5 });
     io.observe(aboutVideo);
+
     aboutVideo.addEventListener('ended', function() {
       aboutPhotoBox.classList.remove('is-playing');
     });
+
+    if (soundToggle) {
+      soundToggle.addEventListener('click', function() {
+        aboutVideo.muted = !aboutVideo.muted;
+        setSoundIcon(!aboutVideo.muted);
+        if (aboutVideo.paused) {
+          aboutVideo.play().catch(function() {});
+        }
+      });
+    }
   }
 
   // Relay cube: slight extra tilt toward cursor on top of its idle spin
